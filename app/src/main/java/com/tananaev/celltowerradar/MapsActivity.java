@@ -1,13 +1,10 @@
 package com.tananaev.celltowerradar;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Looper;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -22,6 +19,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
@@ -31,6 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+    private static final int REFRESH_DELAY = 60 * 1000;
 
     private GoogleMap map;
     private CellLocationClient cellLocationClient = new CellLocationClient();
@@ -88,34 +88,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @SuppressWarnings("MissingPermission")
     private void loadData() {
         map.setMyLocationEnabled(true);
-        loadCellInfo();
+        final Handler handler = new Handler();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                loadCellInfo();
+                handler.postDelayed(this, REFRESH_DELAY);
+            }
+        });
     }
 
     private void addCellTower(int id, double lat, double lon) {
-        cells.put(id, map.addMarker(new MarkerOptions().position(new LatLng(lat, lon))));
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void loadLocationInfo() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                map.addMarker(new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())));
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-            }
-        }, Looper.getMainLooper());
+        cells.put(id, map.addMarker(new MarkerOptions().position(new LatLng(lat, lon))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))));
     }
 
     @SuppressWarnings("NewApi")
