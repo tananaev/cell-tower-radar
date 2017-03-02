@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -107,51 +108,55 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void loadCellInfo() {
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
-        for (final CellInfo cell : telephonyManager.getAllCellInfo()) {
+        List<CellInfo> cellList = telephonyManager.getAllCellInfo();
 
-            final CellLocationClient.CellTower cellTower = new CellLocationClient.CellTower();
+        if (cellList != null) {
+            for (final CellInfo cell : cellList) {
 
-            if (cell instanceof CellInfoGsm) {
-                CellInfoGsm cellInfoGsm = (CellInfoGsm) cell;
-                cellTower.setRadioType("gsm");
-                cellTower.setMobileCountryCode(cellInfoGsm.getCellIdentity().getMcc());
-                cellTower.setMobileNetworkCode(cellInfoGsm.getCellIdentity().getMnc());
-                cellTower.setLocationAreaCode(cellInfoGsm.getCellIdentity().getLac());
-                cellTower.setCellId(cellInfoGsm.getCellIdentity().getCid());
-            } else if (cell instanceof CellInfoLte) {
-                CellInfoLte cellInfoLte = (CellInfoLte) cell;
-                cellTower.setRadioType("lte");
-                cellTower.setMobileCountryCode(cellInfoLte.getCellIdentity().getMcc());
-                cellTower.setMobileNetworkCode(cellInfoLte.getCellIdentity().getMnc());
-                cellTower.setLocationAreaCode(cellInfoLte.getCellIdentity().getTac());
-                cellTower.setCellId(cellInfoLte.getCellIdentity().getCi());
-            } else if (cell instanceof CellInfoWcdma) {
-                CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cell;
-                cellTower.setRadioType("wcdma");
-                cellTower.setMobileCountryCode(cellInfoWcdma.getCellIdentity().getMcc());
-                cellTower.setMobileNetworkCode(cellInfoWcdma.getCellIdentity().getMnc());
-                cellTower.setLocationAreaCode(cellInfoWcdma.getCellIdentity().getLac());
-                cellTower.setCellId(cellInfoWcdma.getCellIdentity().getCid());
+                final CellLocationClient.CellTower cellTower = new CellLocationClient.CellTower();
+
+                if (cell instanceof CellInfoGsm) {
+                    CellInfoGsm cellInfoGsm = (CellInfoGsm) cell;
+                    cellTower.setRadioType("gsm");
+                    cellTower.setMobileCountryCode(cellInfoGsm.getCellIdentity().getMcc());
+                    cellTower.setMobileNetworkCode(cellInfoGsm.getCellIdentity().getMnc());
+                    cellTower.setLocationAreaCode(cellInfoGsm.getCellIdentity().getLac());
+                    cellTower.setCellId(cellInfoGsm.getCellIdentity().getCid());
+                } else if (cell instanceof CellInfoLte) {
+                    CellInfoLte cellInfoLte = (CellInfoLte) cell;
+                    cellTower.setRadioType("lte");
+                    cellTower.setMobileCountryCode(cellInfoLte.getCellIdentity().getMcc());
+                    cellTower.setMobileNetworkCode(cellInfoLte.getCellIdentity().getMnc());
+                    cellTower.setLocationAreaCode(cellInfoLte.getCellIdentity().getTac());
+                    cellTower.setCellId(cellInfoLte.getCellIdentity().getCi());
+                } else if (cell instanceof CellInfoWcdma) {
+                    CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cell;
+                    cellTower.setRadioType("wcdma");
+                    cellTower.setMobileCountryCode(cellInfoWcdma.getCellIdentity().getMcc());
+                    cellTower.setMobileNetworkCode(cellInfoWcdma.getCellIdentity().getMnc());
+                    cellTower.setLocationAreaCode(cellInfoWcdma.getCellIdentity().getLac());
+                    cellTower.setCellId(cellInfoWcdma.getCellIdentity().getCid());
+                }
+
+                if (cellTower.getCellId() != 0 && cellTower.getCellId() != Integer.MAX_VALUE && !cells.containsKey(cellTower.getCellId())) {
+                    cellLocationClient.getCellLocation(cellTower, new CellLocationClient.CellLocationCallback() {
+                        @Override
+                        public void onSuccess(final double lat, final double lon) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    addCellTower(cellTower.getCellId(), lat, lon);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onFailure() {
+                        }
+                    });
+                }
+
             }
-
-            if (cellTower.getCellId() != 0 && cellTower.getCellId() != Integer.MAX_VALUE && !cells.containsKey(cellTower.getCellId())) {
-                cellLocationClient.getCellLocation(cellTower, new CellLocationClient.CellLocationCallback() {
-                    @Override
-                    public void onSuccess(final double lat, final double lon) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                addCellTower(cellTower.getCellId(), lat, lon);
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure() {
-                    }
-                });
-            }
-
         }
     }
 
