@@ -13,6 +13,8 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -61,6 +63,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                TextView title = new TextView(MapsActivity.this);
+                title.setText(marker.getTitle());
+                return title;
+            }
+        });
+
         checkPermissions();
     }
 
@@ -99,9 +115,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    private void addCellTower(int id, double lat, double lon) {
-        cells.put(id, map.addMarker(new MarkerOptions().position(new LatLng(lat, lon))
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))));
+    private void addCellTower(int mcc, int mnc, int lac, int cid, double lat, double lon) {
+        cells.put(cid, map.addMarker(new MarkerOptions().position(new LatLng(lat, lon))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
+                .title("MCC: " + mcc + "\nMNC: " + mnc + "\nLAC: " + lac + "\nCID: " + cid)));
     }
 
     @SuppressWarnings("NewApi")
@@ -145,7 +162,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    addCellTower(cellTower.getCellId(), lat, lon);
+                                    addCellTower(
+                                            cellTower.getMobileCountryCode(), cellTower.getMobileNetworkCode(),
+                                            cellTower.getLocationAreaCode(), cellTower.getCellId(), lat, lon);
                                 }
                             });
                         }
