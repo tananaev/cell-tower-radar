@@ -19,7 +19,7 @@ android {
 dependencies {
     compile 'com.android.support:multidex:1.0.3'
     compile 'com.android.support:appcompat-v7:27.1.0'
-    compile 'com.google.android.gms:play-services:11.8.0'
+    compile 'com.google.android.gms:play-services-maps:11.8.0'
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.squareup.okhttp3:okhttp:3.9.1'
 }
