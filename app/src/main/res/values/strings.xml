@@ -2,5 +2,11 @@
     <string name="app_name">Cell Tower Radar</string>
     <string name="title_activity_maps">Map</string>
 
+    <string name="rate_title">Rate this app</string>
+    <string name="rate_message">If you enjoy using this app, would you mind taking a moment to rate it? It won\'t take more than a minute. Thank you for your support!</string>
+    <string name="rate_later">Later</string>
+    <string name="rate_no">No, Thanks</string>
+    <string name="rate_rate">Rate Now</string>
+
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyADC-dMqiEKjpVwT14IQuN_wRD6ruRimxo</string>
 </resources>
