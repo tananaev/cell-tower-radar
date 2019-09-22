@@ -1,14 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 29
     defaultConfig {
         applicationId "com.tananaev.celltowerradar"
         minSdkVersion 17
-        targetSdkVersion 27
-        versionCode 5
-        versionName "1.4"
+        targetSdkVersion 29
+        versionCode 6
+        versionName "1.5"
         multiDexEnabled true
     }
     dexOptions {
@@ -17,9 +16,9 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:multidex:1.0.3'
-    compile 'com.android.support:appcompat-v7:27.1.0'
-    compile 'com.google.android.gms:play-services-maps:11.8.0'
-    compile 'com.google.code.gson:gson:2.8.0'
-    compile 'com.squareup.okhttp3:okhttp:3.9.1'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
 }

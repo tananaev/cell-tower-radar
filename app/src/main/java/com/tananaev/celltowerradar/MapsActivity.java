@@ -1,14 +1,16 @@
 package com.tananaev.celltowerradar;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
+import androidx.core.content.ContextCompat;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
@@ -83,12 +85,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+        String requiredPermission;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION;
+        } else {
+            requiredPermission = Manifest.permission.ACCESS_COARSE_LOCATION;
+        }
+        if (ContextCompat.checkSelfPermission(this, requiredPermission)
                 != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, requiredPermission)) {
                 // TODO show dialog
             } else {
-                ActivityCompat.requestPermissions(this, new String[]{ android.Manifest.permission.ACCESS_COARSE_LOCATION }, 0);
+                ActivityCompat.requestPermissions(this, new String[]{ requiredPermission }, 0);
             }
         } else {
             loadData();
