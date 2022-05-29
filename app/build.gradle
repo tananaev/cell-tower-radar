@@ -1,24 +1,25 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 32
     defaultConfig {
-        applicationId "com.tananaev.celltowerradar"
-        minSdkVersion 17
-        targetSdkVersion 29
-        versionCode 6
-        versionName "1.5"
+        applicationId 'com.tananaev.celltowerradar'
+        minSdkVersion 19
+        targetSdkVersion 32
+        versionCode 7
+        versionName '1.6'
         multiDexEnabled true
     }
     dexOptions {
-        javaMaxHeapSize "4g"
+        javaMaxHeapSize '4g'
     }
+    namespace 'com.tananaev.celltowerradar'
 }
 
 dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
-    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.gms:play-services-maps:18.0.2'
+    implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
 }
