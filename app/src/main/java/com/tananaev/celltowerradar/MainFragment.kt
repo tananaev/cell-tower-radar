@@ -2,6 +2,7 @@ package com.tananaev.celltowerradar
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context.*
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -17,24 +18,24 @@ import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.*
-import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.tananaev.celltowerradar.CellLocationClient.*
 
-class MainActivity : FragmentActivity(), OnMapReadyCallback {
+class MainFragment : SupportMapFragment(), OnMapReadyCallback {
 
+    val handler = Handler(Looper.getMainLooper())
     private lateinit var map: GoogleMap
     private val cellLocationClient = CellLocationClient()
     private val cells: MutableMap<Int, Marker?> = HashMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.apply {
+        requireActivity().window.apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
                 addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -42,18 +43,15 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                 statusBarColor = Color.TRANSPARENT
             }
         }
-        setContentView(R.layout.activity_main)
-        val mapFragment = fragmentManager.findFragmentById(R.id.map) as MapFragment
-        mapFragment.getMapAsync(this)
-        RatingDialogFragment.showRating(this, supportFragmentManager)
+        getMapAsync(this)
+        RatingDialogFragment.showRating(requireContext(), childFragmentManager)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json))
+        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.style_json))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val view = findViewById<View>(android.R.id.content)
-            view.setOnApplyWindowInsetsListener { _, insets ->
+            view?.setOnApplyWindowInsetsListener { _, insets ->
                 map.setPadding(0, insets.systemWindowInsetTop, 0, 0)
                 insets
             }
@@ -74,7 +72,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
             }
 
             override fun getInfoContents(marker: Marker): View {
-                val title = TextView(this@MainActivity)
+                val title = TextView(requireContext())
                 title.text = marker.title
                 return title
             }
@@ -88,11 +86,11 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
         } else {
             Manifest.permission.ACCESS_COARSE_LOCATION
         }
-        if (ContextCompat.checkSelfPermission(this, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, requiredPermission)) {
+        if (ContextCompat.checkSelfPermission(requireContext(), requiredPermission) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), requiredPermission)) {
                 // TODO show dialog
             } else {
-                ActivityCompat.requestPermissions(this, arrayOf(requiredPermission), 0)
+                ActivityCompat.requestPermissions(requireActivity(), arrayOf(requiredPermission), 0)
             }
         } else {
             loadData()
@@ -109,7 +107,6 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     @SuppressLint("MissingPermission")
     private fun loadData() {
         map.isMyLocationEnabled = true
-        val handler = Handler(Looper.getMainLooper())
         handler.post(object : Runnable {
             override fun run() {
                 loadCellInfo()
@@ -126,7 +123,7 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun loadCellInfo() {
-        val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        val telephonyManager = requireContext().getSystemService(TELEPHONY_SERVICE) as TelephonyManager
         val cellList = telephonyManager.allCellInfo
         if (cellList != null) {
             for (cell in cellList) {
@@ -157,10 +154,10 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
                 if (cellTower.cellId != 0 && cellTower.cellId != Int.MAX_VALUE && !cells.containsKey(cellTower.cellId)) {
                     cellLocationClient.getCellLocation(cellTower, object : CellLocationCallback {
                         override fun onSuccess(lat: Double, lon: Double) {
-                            runOnUiThread {
+                            handler.post {
                                 addCellTower(
-                                        cellTower.mobileCountryCode, cellTower.mobileNetworkCode,
-                                        cellTower.locationAreaCode, cellTower.cellId, lat, lon)
+                                    cellTower.mobileCountryCode, cellTower.mobileNetworkCode,
+                                    cellTower.locationAreaCode, cellTower.cellId, lat, lon)
                             }
                         }
 
