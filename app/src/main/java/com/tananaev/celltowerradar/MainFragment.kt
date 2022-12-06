@@ -44,7 +44,6 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
             }
         }
         getMapAsync(this)
-        RatingDialogFragment.showRating(requireContext(), childFragmentManager)
     }
 
     override fun onMapReady(googleMap: GoogleMap) {

@@ -39,6 +39,7 @@ dependencies {
     googleImplementation 'com.google.firebase:firebase-analytics-ktx'
     googleImplementation 'com.google.firebase:firebase-crashlytics'
     googleImplementation 'com.google.android.gms:play-services-ads:21.3.0'
+    googleImplementation 'com.google.android.play:review-ktx:2.0.1'
 }
 
 if (getGradle().getStartParameter().getTaskRequests().toString().contains('Google')) {
