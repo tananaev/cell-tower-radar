@@ -3,6 +3,7 @@ package com.tananaev.celltowerradar
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -12,18 +13,18 @@ import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
 import android.view.View
+import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
+import com.google.android.gms.maps.GoogleMap.*
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
-import com.tananaev.celltowerradar.CellLocationClient.CellLocationCallback
-import com.tananaev.celltowerradar.CellLocationClient.CellTower
+import com.tananaev.celltowerradar.CellLocationClient.*
 
 class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
@@ -33,6 +34,14 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+                addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                statusBarColor = Color.TRANSPARENT
+            }
+        }
         setContentView(R.layout.activity_main)
         val mapFragment = fragmentManager.findFragmentById(R.id.map) as MapFragment
         mapFragment.getMapAsync(this)
@@ -42,11 +51,18 @@ class MainActivity : FragmentActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         map.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val view = findViewById<View>(android.R.id.content)
+            view.setOnApplyWindowInsetsListener { _, insets ->
+                map.setPadding(0, insets.systemWindowInsetTop, 0, 0)
+                insets
+            }
+        }
         var locationInitialized = false
         map.setOnMyLocationChangeListener { location ->
             if (!locationInitialized) {
                 val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(location.latitude, location.longitude), 12f
+                    LatLng(location.latitude, location.longitude), 10f
                 )
                 map.moveCamera(cameraUpdate)
                 locationInitialized = true
