@@ -1,193 +1,161 @@
-package com.tananaev.celltowerradar;
+package com.tananaev.celltowerradar
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
-import androidx.core.content.ContextCompat;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoWcdma;
-import android.telephony.TelephonyManager;
-import android.view.View;
-import android.widget.TextView;
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoWcdma
+import android.telephony.TelephonyManager
+import android.view.View
+import android.widget.TextView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter
+import com.google.android.gms.maps.MapFragment
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.*
+import com.tananaev.celltowerradar.CellLocationClient.CellLocationCallback
+import com.tananaev.celltowerradar.CellLocationClient.CellTower
 
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
+class MainActivity : FragmentActivity(), OnMapReadyCallback {
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+    private lateinit var map: GoogleMap
+    private val cellLocationClient = CellLocationClient()
+    private val cells: MutableMap<Int, Marker?> = HashMap()
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-
-    private static final int REFRESH_DELAY = 60 * 1000;
-
-    private GoogleMap map;
-    private CellLocationClient cellLocationClient = new CellLocationClient();
-    private Map<Integer, Marker> cells = new HashMap<>();
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-
-        RatingDialogFragment.showRating(this, getSupportFragmentManager());
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        val mapFragment = fragmentManager.findFragmentById(R.id.map) as MapFragment
+        mapFragment.getMapAsync(this)
+        RatingDialogFragment.showRating(this, supportFragmentManager)
     }
 
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json));
-
-        map.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
-            @Override
-            public void onMyLocationChange(Location location) {
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                        new LatLng(location.getLatitude(), location.getLongitude()), 12);
-                map.moveCamera(cameraUpdate);
+    override fun onMapReady(googleMap: GoogleMap) {
+        map = googleMap
+        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json))
+        var locationInitialized = false
+        map.setOnMyLocationChangeListener { location ->
+            if (!locationInitialized) {
+                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
+                    LatLng(location.latitude, location.longitude), 12f
+                )
+                map.moveCamera(cameraUpdate)
+                locationInitialized = true
             }
-        });
-
-        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-            @Override
-            public View getInfoWindow(Marker marker) {
-                return null;
-            }
-
-            @Override
-            public View getInfoContents(Marker marker) {
-                TextView title = new TextView(MapsActivity.this);
-                title.setText(marker.getTitle());
-                return title;
-            }
-        });
-
-        checkPermissions();
-    }
-
-    private void checkPermissions() {
-        String requiredPermission;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            requiredPermission = Manifest.permission.ACCESS_FINE_LOCATION;
-        } else {
-            requiredPermission = Manifest.permission.ACCESS_COARSE_LOCATION;
         }
-        if (ContextCompat.checkSelfPermission(this, requiredPermission)
-                != PackageManager.PERMISSION_GRANTED) {
+        map.setInfoWindowAdapter(object : InfoWindowAdapter {
+            override fun getInfoWindow(marker: Marker): View? {
+                return null
+            }
+
+            override fun getInfoContents(marker: Marker): View {
+                val title = TextView(this@MainActivity)
+                title.text = marker.title
+                return title
+            }
+        })
+        checkPermissions()
+    }
+
+    private fun checkPermissions() {
+        val requiredPermission: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Manifest.permission.ACCESS_FINE_LOCATION
+        } else {
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        }
+        if (ContextCompat.checkSelfPermission(this, requiredPermission) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, requiredPermission)) {
                 // TODO show dialog
             } else {
-                ActivityCompat.requestPermissions(this, new String[]{ requiredPermission }, 0);
+                ActivityCompat.requestPermissions(this, arrayOf(requiredPermission), 0)
             }
         } else {
-            loadData();
+            loadData()
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadData();
-        } else {
-            // TODO show error
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            loadData()
         }
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void loadData() {
-        map.setMyLocationEnabled(true);
-        final Handler handler = new Handler();
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                loadCellInfo();
-                handler.postDelayed(this, REFRESH_DELAY);
-            }
-        });
-    }
-
-    private void addCellTower(int mcc, int mnc, int lac, int cid, double lat, double lon) {
-        cells.put(cid, map.addMarker(new MarkerOptions().position(new LatLng(lat, lon))
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
-                .title("MCC: " + mcc + "\nMNC: " + mnc + "\nLAC: " + lac + "\nCID: " + cid)));
     }
 
     @SuppressLint("MissingPermission")
-    @SuppressWarnings("NewApi")
-    private void loadCellInfo() {
-        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+    private fun loadData() {
+        map.isMyLocationEnabled = true
+        val handler = Handler(Looper.getMainLooper())
+        handler.post(object : Runnable {
+            override fun run() {
+                loadCellInfo()
+                handler.postDelayed(this, REFRESH_DELAY.toLong())
+            }
+        })
+    }
 
-        List<CellInfo> cellList = telephonyManager.getAllCellInfo();
+    private fun addCellTower(mcc: Int, mnc: Int, lac: Int, cid: Int, lat: Double, lon: Double) {
+        cells[cid] = map.addMarker(MarkerOptions().position(LatLng(lat, lon))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
+                .title("Country Code: $mcc\nNetwork Code: $mnc\nLocation Area Code: $lac\nCell ID: $cid"))
+    }
 
+    @SuppressLint("MissingPermission")
+    private fun loadCellInfo() {
+        val telephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        val cellList = telephonyManager.allCellInfo
         if (cellList != null) {
-            for (final CellInfo cell : cellList) {
-
-                final CellLocationClient.CellTower cellTower = new CellLocationClient.CellTower();
-
-                if (cell instanceof CellInfoGsm) {
-                    CellInfoGsm cellInfoGsm = (CellInfoGsm) cell;
-                    cellTower.setRadioType("gsm");
-                    cellTower.setMobileCountryCode(cellInfoGsm.getCellIdentity().getMcc());
-                    cellTower.setMobileNetworkCode(cellInfoGsm.getCellIdentity().getMnc());
-                    cellTower.setLocationAreaCode(cellInfoGsm.getCellIdentity().getLac());
-                    cellTower.setCellId(cellInfoGsm.getCellIdentity().getCid());
-                } else if (cell instanceof CellInfoLte) {
-                    CellInfoLte cellInfoLte = (CellInfoLte) cell;
-                    cellTower.setRadioType("lte");
-                    cellTower.setMobileCountryCode(cellInfoLte.getCellIdentity().getMcc());
-                    cellTower.setMobileNetworkCode(cellInfoLte.getCellIdentity().getMnc());
-                    cellTower.setLocationAreaCode(cellInfoLte.getCellIdentity().getTac());
-                    cellTower.setCellId(cellInfoLte.getCellIdentity().getCi());
-                } else if (cell instanceof CellInfoWcdma) {
-                    CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) cell;
-                    cellTower.setRadioType("wcdma");
-                    cellTower.setMobileCountryCode(cellInfoWcdma.getCellIdentity().getMcc());
-                    cellTower.setMobileNetworkCode(cellInfoWcdma.getCellIdentity().getMnc());
-                    cellTower.setLocationAreaCode(cellInfoWcdma.getCellIdentity().getLac());
-                    cellTower.setCellId(cellInfoWcdma.getCellIdentity().getCid());
+            for (cell in cellList) {
+                val cellTower = CellTower()
+                when (cell) {
+                    is CellInfoGsm -> {
+                        cellTower.radioType = "gsm"
+                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
+                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
+                        cellTower.locationAreaCode = cell.cellIdentity.lac
+                        cellTower.cellId = cell.cellIdentity.cid
+                    }
+                    is CellInfoLte -> {
+                        cellTower.radioType = "lte"
+                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
+                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
+                        cellTower.locationAreaCode = cell.cellIdentity.tac
+                        cellTower.cellId = cell.cellIdentity.ci
+                    }
+                    is CellInfoWcdma -> {
+                        cellTower.radioType = "wcdma"
+                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
+                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
+                        cellTower.locationAreaCode = cell.cellIdentity.lac
+                        cellTower.cellId = cell.cellIdentity.cid
+                    }
                 }
-
-                if (cellTower.getCellId() != 0 && cellTower.getCellId() != Integer.MAX_VALUE && !cells.containsKey(cellTower.getCellId())) {
-                    cellLocationClient.getCellLocation(cellTower, new CellLocationClient.CellLocationCallback() {
-                        @Override
-                        public void onSuccess(final double lat, final double lon) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    addCellTower(
-                                            cellTower.getMobileCountryCode(), cellTower.getMobileNetworkCode(),
-                                            cellTower.getLocationAreaCode(), cellTower.getCellId(), lat, lon);
-                                }
-                            });
+                if (cellTower.cellId != 0 && cellTower.cellId != Int.MAX_VALUE && !cells.containsKey(cellTower.cellId)) {
+                    cellLocationClient.getCellLocation(cellTower, object : CellLocationCallback {
+                        override fun onSuccess(lat: Double, lon: Double) {
+                            runOnUiThread {
+                                addCellTower(
+                                        cellTower.mobileCountryCode, cellTower.mobileNetworkCode,
+                                        cellTower.locationAreaCode, cellTower.cellId, lat, lon)
+                            }
                         }
 
-                        @Override
-                        public void onFailure() {
-                        }
-                    });
+                        override fun onFailure() {}
+                    })
                 }
-
             }
         }
     }
 
+    companion object {
+        private const val REFRESH_DELAY = 60 * 1000
+    }
 }
