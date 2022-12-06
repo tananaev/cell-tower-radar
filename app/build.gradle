@@ -57,4 +57,3 @@ if (getGradle().getStartParameter().getTaskRequests().toString().contains('Googl
         preBuild.dependsOn copyJson
     }
 }
-
