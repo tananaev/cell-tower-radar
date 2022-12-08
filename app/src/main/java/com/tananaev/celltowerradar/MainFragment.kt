@@ -108,8 +108,10 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
         map.isMyLocationEnabled = true
         handler.post(object : Runnable {
             override fun run() {
-                loadCellInfo()
-                handler.postDelayed(this, REFRESH_DELAY.toLong())
+                if (context != null) {
+                    loadCellInfo()
+                    handler.postDelayed(this, REFRESH_DELAY.toLong())
+                }
             }
         })
     }
@@ -122,8 +124,8 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun loadCellInfo() {
-        val telephonyManager = requireContext().getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-        val cellList = telephonyManager.allCellInfo
+        val telephonyManager = context?.getSystemService(TELEPHONY_SERVICE) as TelephonyManager?
+        val cellList = telephonyManager?.allCellInfo
         if (cellList != null) {
             for (cell in cellList) {
                 val cellTower = CellTower()
