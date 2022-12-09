@@ -9,8 +9,8 @@ android {
         applicationId 'com.tananaev.celltowerradar'
         minSdkVersion 19
         targetSdkVersion 33
-        versionCode 10
-        versionName '2.2'
+        versionCode 11
+        versionName '2.3'
         multiDexEnabled true
     }
     dexOptions {
