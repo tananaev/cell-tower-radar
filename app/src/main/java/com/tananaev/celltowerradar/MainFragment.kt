@@ -13,11 +13,13 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
+import android.text.Html
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.GoogleMap.*
@@ -26,7 +28,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.tananaev.celltowerradar.CellLocationClient.*
 
-class MainFragment : SupportMapFragment(), OnMapReadyCallback {
+class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
 
     val handler = Handler(Looper.getMainLooper())
     private lateinit var map: GoogleMap
@@ -43,7 +45,16 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
                 statusBarColor = Color.TRANSPARENT
             }
         }
-        getMapAsync(this)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        updateStatus("Loading...")
+        val fragment = childFragmentManager.findFragmentById(R.id.map_view) as SupportMapFragment
+        fragment.getMapAsync(this)
+    }
+
+    private fun updateStatus(status: String) {
+        view?.findViewById<TextView>(R.id.status_view)?.text = status
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -72,7 +83,8 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
 
             override fun getInfoContents(marker: Marker): View {
                 val title = TextView(requireContext())
-                title.text = marker.title
+                title.text = Html.fromHtml(marker.title)
+                title.textSize = resources.getDimension(R.dimen.marker_text_size)
                 return title
             }
         })
@@ -80,6 +92,7 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
     }
 
     private fun checkPermissions() {
+        updateStatus("Getting location...")
         val requiredPermission: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             Manifest.permission.ACCESS_FINE_LOCATION
         } else {
@@ -89,7 +102,7 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
             if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), requiredPermission)) {
                 // TODO show dialog
             } else {
-                ActivityCompat.requestPermissions(requireActivity(), arrayOf(requiredPermission), 0)
+                requestPermissions(arrayOf(requiredPermission), 0)
             }
         } else {
             loadData()
@@ -105,6 +118,8 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
 
     @SuppressLint("MissingPermission")
     private fun loadData() {
+        updateStatus("Loading cell info...")
+        map.isMyLocationEnabled = false
         map.isMyLocationEnabled = true
         handler.post(object : Runnable {
             override fun run() {
@@ -117,9 +132,24 @@ class MainFragment : SupportMapFragment(), OnMapReadyCallback {
     }
 
     private fun addCellTower(mcc: Int, mnc: Int, lac: Int, cid: Int, lat: Double, lon: Double) {
-        cells[cid] = map.addMarker(MarkerOptions().position(LatLng(lat, lon))
+        val text = """
+            <b>Country Code:</b> $mcc<br>
+            <b>Network Code:</b> $mnc<br>
+            <b>Location Area Code:</b> $lac<br>
+            <b>Cell ID:</b> $cid
+        """.trimIndent()
+
+        cells[cid] = map.addMarker(
+            MarkerOptions().position(LatLng(lat, lon))
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
-                .title("Country Code: $mcc\nNetwork Code: $mnc\nLocation Area Code: $lac\nCell ID: $cid"))
+                .title(text)
+        )
+
+        when (cells.size) {
+            0 -> updateStatus("No towers found")
+            1 -> updateStatus("Found one tower")
+            else -> updateStatus("Found ${cells.size} towers")
+        }
     }
 
     @SuppressLint("MissingPermission")
