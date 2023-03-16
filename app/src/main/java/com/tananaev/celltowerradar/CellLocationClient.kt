@@ -36,13 +36,16 @@ class CellLocationClient {
         okHttpClient.newCall(request).enqueue(object : Callback {
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
-                val json = JsonParser.parseString(response.body()?.string()) as JsonObject
-                if (json.has("location")) {
-                    val location = json.getAsJsonObject("location")
-                    callback.onSuccess(
+                val result = JsonParser.parseString(response.body()?.string())
+                if (result.isJsonObject) {
+                    val json = result as JsonObject
+                    if (json.has("location")) {
+                        val location = json.getAsJsonObject("location")
+                        callback.onSuccess(
                             location.getAsJsonPrimitive("lat").asDouble,
                             location.getAsJsonPrimitive("lng").asDouble)
-                    return
+                        return
+                    }
                 }
                 callback.onFailure()
             }
