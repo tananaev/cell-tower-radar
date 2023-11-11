@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
+    id "com.dorongold.task-tree" version "2.1.1"
 }
 
 android {
@@ -61,12 +62,8 @@ tasks.register('copyFirebaseConfig', Copy) {
     rename('cell-tower-radar.json', 'google-services.json')
 }
 afterEvaluate {
-    processGoogleDebugGoogleServices.dependsOn copyFirebaseConfig
-    processGoogleReleaseGoogleServices.dependsOn copyFirebaseConfig
-    mergeGoogleDebugShaders.dependsOn copyFirebaseConfig
-    mergeGoogleReleaseShaders.dependsOn copyFirebaseConfig
-    mergeGoogleDebugJniLibFolders.dependsOn copyFirebaseConfig
-    mergeGoogleReleaseJniLibFolders.dependsOn copyFirebaseConfig
+    preGoogleDebugBuild.mustRunAfter copyFirebaseConfig
+    preGoogleReleaseBuild.mustRunAfter copyFirebaseConfig
 }
 android.applicationVariants.configureEach { variant ->
     tasks.named("process${variant.name.capitalize()}GoogleServices")
