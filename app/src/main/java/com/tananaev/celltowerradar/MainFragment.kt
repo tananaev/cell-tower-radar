@@ -70,7 +70,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
         map.setOnMyLocationChangeListener { location ->
             if (!locationInitialized) {
                 val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(location.latitude, location.longitude), 10f
+                    LatLng(location.latitude, location.longitude), 14f
                 )
                 map.moveCamera(cameraUpdate)
                 locationInitialized = true
@@ -84,7 +84,7 @@ class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
             override fun getInfoContents(marker: Marker): View {
                 val title = TextView(requireContext())
                 title.text = Html.fromHtml(marker.title)
-                title.textSize = resources.getDimension(R.dimen.marker_text_size)
+                title.textSize = resources.getInteger(R.integer.marker_text_size).toFloat()
                 return title
             }
         })
