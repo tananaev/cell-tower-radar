@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
@@ -13,9 +15,6 @@ android {
         versionName '2.5'
         multiDexEnabled true
     }
-    dexOptions {
-        javaMaxHeapSize '4g'
-    }
     namespace 'com.tananaev.celltowerradar'
 
     buildFeatures {
@@ -24,6 +23,7 @@ android {
     productFlavors {
         regular {
             isDefault = true
+            ext.enableCrashlytics = false
         }
         google
     }
@@ -54,18 +54,21 @@ dependencies {
     googleImplementation 'com.google.android.play:review-ktx:2.0.1'
 }
 
-if (getGradle().getStartParameter().getTaskRequests().toString().contains('Google')) {
-    apply plugin: 'com.google.gms.google-services'
-    apply plugin: 'com.google.firebase.crashlytics'
-
-    task copyJson(type: Copy) {
-        from '../../environment/firebase'
-        into '.'
-        include 'cell-tower-radar.json'
-        rename('cell-tower-radar.json', 'google-services.json')
-    }
-
-    afterEvaluate {
-        preBuild.dependsOn copyJson
-    }
+tasks.register('copyFirebaseConfig', Copy) {
+    from '../../environment/firebase'
+    into '.'
+    include 'cell-tower-radar.json'
+    rename('cell-tower-radar.json', 'google-services.json')
+}
+afterEvaluate {
+    processGoogleDebugGoogleServices.dependsOn copyFirebaseConfig
+    processGoogleReleaseGoogleServices.dependsOn copyFirebaseConfig
+    mergeGoogleDebugShaders.dependsOn copyFirebaseConfig
+    mergeGoogleReleaseShaders.dependsOn copyFirebaseConfig
+    mergeGoogleDebugJniLibFolders.dependsOn copyFirebaseConfig
+    mergeGoogleReleaseJniLibFolders.dependsOn copyFirebaseConfig
+}
+android.applicationVariants.configureEach { variant ->
+    tasks.named("process${variant.name.capitalize()}GoogleServices")
+            .get().enabled(variant.flavorName == 'google')
 }
