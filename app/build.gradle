@@ -61,8 +61,9 @@ tasks.register('copyFirebaseConfig', Copy) {
     rename('cell-tower-radar.json', 'google-services.json')
 }
 afterEvaluate {
-    preGoogleDebugBuild.mustRunAfter copyFirebaseConfig
-    preGoogleReleaseBuild.mustRunAfter copyFirebaseConfig
+    tasks.matching { it.name.contains('Google') }.configureEach { task ->
+        task.dependsOn copyFirebaseConfig
+    }
 }
 android.applicationVariants.configureEach { variant ->
     tasks.named("process${variant.name.capitalize()}GoogleServices")
