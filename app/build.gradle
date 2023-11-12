@@ -62,10 +62,10 @@ tasks.register('copyFirebaseConfig', Copy) {
 }
 afterEvaluate {
     tasks.matching { it.name.contains('Google') }.configureEach { task ->
-        task.dependsOn copyFirebaseConfig
+        if (task.name.contains('Regular')) {
+            task.enabled false
+        } else {
+            task.dependsOn copyFirebaseConfig
+        }
     }
-}
-android.applicationVariants.configureEach { variant ->
-    tasks.named("process${variant.name.capitalize()}GoogleServices")
-            .get().enabled(variant.flavorName == 'google')
 }
