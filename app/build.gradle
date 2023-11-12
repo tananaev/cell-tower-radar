@@ -3,7 +3,6 @@ plugins {
     id 'kotlin-android'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
-    id "com.dorongold.task-tree" version "2.1.1"
 }
 
 android {
