@@ -8,10 +8,6 @@ import java.io.IOException
 
 class CellLocationClient {
 
-    class CellTowerRequest(cellTower: CellTower) {
-        val cellTowers: Array<CellTower> = arrayOf(cellTower)
-    }
-
     class CellTower {
         var radioType: String? = null
         var mobileCountryCode = 0
@@ -29,23 +25,24 @@ class CellLocationClient {
     }
 
     fun getCellLocation(cellTower: CellTower, callback: CellLocationCallback) {
-        val request = Request.Builder()
-                .url(URL)
-                .post(RequestBody.create(MediaType.parse("application/json"), gson.toJson(CellTowerRequest(cellTower))))
-                .build()
+        val key = "pk.d47e9b1532bf663adf3b3fd443f2b3e6"
+        val mcc = cellTower.mobileCountryCode
+        val mnc = cellTower.mobileNetworkCode
+        val lac = cellTower.locationAreaCode
+        val cid = cellTower.cellId
+        val url = "http://opencellid.org/cell/get?key=${key}&mcc=${mcc}&mnc=${mnc}&lac=${lac}&cellid=${cid}&format=json"
+        val request = Request.Builder().url(url).get().build()
         okHttpClient.newCall(request).enqueue(object : Callback {
             @Throws(IOException::class)
             override fun onResponse(call: Call, response: Response) {
                 val result = JsonParser.parseString(response.body()?.string())
                 if (result.isJsonObject) {
                     val json = result as JsonObject
-                    if (json.has("location")) {
-                        val location = json.getAsJsonObject("location")
-                        callback.onSuccess(
-                            location.getAsJsonPrimitive("lat").asDouble,
-                            location.getAsJsonPrimitive("lng").asDouble)
-                        return
-                    }
+                    callback.onSuccess(
+                        json.getAsJsonPrimitive("lat").asDouble,
+                        json.getAsJsonPrimitive("lon").asDouble
+                    )
+                    return
                 }
                 callback.onFailure()
             }
@@ -54,9 +51,5 @@ class CellLocationClient {
                 callback.onFailure()
             }
         })
-    }
-
-    companion object {
-        private const val URL = "https://location.services.mozilla.com/v1/geolocate?key=test"
     }
 }
