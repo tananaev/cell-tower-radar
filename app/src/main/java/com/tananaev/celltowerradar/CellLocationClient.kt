@@ -30,7 +30,7 @@ class CellLocationClient {
         val mnc = cellTower.mobileNetworkCode
         val lac = cellTower.locationAreaCode
         val cid = cellTower.cellId
-        val url = "http://opencellid.org/cell/get?key=${key}&mcc=${mcc}&mnc=${mnc}&lac=${lac}&cellid=${cid}&format=json"
+        val url = "https://opencellid.org/cell/get?key=${key}&mcc=${mcc}&mnc=${mnc}&lac=${lac}&cellid=${cid}&format=json"
         val request = Request.Builder().url(url).get().build()
         okHttpClient.newCall(request).enqueue(object : Callback {
             @Throws(IOException::class)
