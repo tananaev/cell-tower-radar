@@ -38,11 +38,12 @@ class CellLocationClient {
                 val result = JsonParser.parseString(response.body()?.string())
                 if (result.isJsonObject) {
                     val json = result as JsonObject
-                    callback.onSuccess(
-                        json.getAsJsonPrimitive("lat").asDouble,
-                        json.getAsJsonPrimitive("lon").asDouble
-                    )
-                    return
+                    val latitude = json.getAsJsonPrimitive("lat")?.asDouble
+                    val longitude = json.getAsJsonPrimitive("lon")?.asDouble
+                    if (latitude != null && longitude != null) {
+                        callback.onSuccess(latitude, longitude)
+                        return
+                    }
                 }
                 callback.onFailure()
             }
