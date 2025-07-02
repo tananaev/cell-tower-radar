@@ -11,8 +11,8 @@ android {
         applicationId 'com.tananaev.celltowerradar'
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 16
-        versionName '3.2'
+        versionCode 17
+        versionName '3.3'
         multiDexEnabled true
     }
     namespace 'com.tananaev.celltowerradar'
