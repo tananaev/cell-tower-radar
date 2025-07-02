@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
         applicationId 'com.tananaev.celltowerradar'
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdkVersion 23
+        targetSdkVersion 36
         versionCode 16
         versionName '3.2'
         multiDexEnabled true
@@ -40,18 +40,18 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.16.0'
     implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'com.google.android.gms:play-services-maps:19.0.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
-    googleImplementation platform('com.google.firebase:firebase-bom:33.3.0')
+    implementation 'com.google.android.gms:play-services-maps:19.2.0'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    googleImplementation platform('com.google.firebase:firebase-bom:33.16.0')
     googleImplementation 'com.google.firebase:firebase-analytics-ktx'
     googleImplementation 'com.google.firebase:firebase-crashlytics'
-    googleImplementation 'com.google.android.gms:play-services-ads:23.3.0'
-    googleImplementation 'com.google.android.play:review-ktx:2.0.1'
+    googleImplementation 'com.google.android.gms:play-services-ads:24.4.0'
+    googleImplementation 'com.google.android.play:review-ktx:2.0.2'
 }
 
 tasks.register('copyFirebaseConfig', Copy) {
