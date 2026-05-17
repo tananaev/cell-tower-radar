@@ -15,8 +15,8 @@ android {
         applicationId = "com.tananaev.celltowerradar"
         minSdk = 23
         targetSdk = 37
-        versionCode = 18
-        versionName = "3.4"
+        versionCode = 19
+        versionName = "3.5"
     }
 
     signingConfigs {
