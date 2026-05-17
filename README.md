@@ -2,7 +2,7 @@
 
 [![Get it on Google Play](http://www.tananaev.com/badges/google-play.svg)](https://play.google.com/store/apps/details?id=com.tananaev.celltowerradar)
 
-The app shows map with markers for cell towers around the mobile device.
+Cell Tower Radar is an Android app that visualizes nearby mobile network infrastructure on a map. It plots the cell towers around your device, giving you a clear picture of the cellular network you are connected to and the surrounding coverage.
 
 ## Contacts
 
