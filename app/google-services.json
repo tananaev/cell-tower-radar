@@ -1,0 +1,107 @@
+{
+  "project_info": {
+    "project_number": "338629771170",
+    "firebase_url": "https://traccar-org.firebaseio.com",
+    "project_id": "traccar-org",
+    "storage_bucket": "traccar-org.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338629771170:android:a20501f9760263285cbcfb",
+        "android_client_info": {
+          "package_name": "com.tananaev.celltowerradar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOWnszlh3RJMStjjRff9hZryi4ffyVcKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338629771170-craa39u5qa8qr8fmjjgs21ko64ru9fve.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338629771170:android:7b0a7e073f3028c15cbcfb",
+        "android_client_info": {
+          "package_name": "com.tananaev.google.fi.switcher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOWnszlh3RJMStjjRff9hZryi4ffyVcKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338629771170-craa39u5qa8qr8fmjjgs21ko64ru9fve.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338629771170:android:6100e0f2488a13e25cbcfb",
+        "android_client_info": {
+          "package_name": "com.tananaev.logcat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOWnszlh3RJMStjjRff9hZryi4ffyVcKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338629771170-craa39u5qa8qr8fmjjgs21ko64ru9fve.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338629771170:android:90180ebe571f98ab5cbcfb",
+        "android_client_info": {
+          "package_name": "com.tananaev.passportreader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOWnszlh3RJMStjjRff9hZryi4ffyVcKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338629771170-craa39u5qa8qr8fmjjgs21ko64ru9fve.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

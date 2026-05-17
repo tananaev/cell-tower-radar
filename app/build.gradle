@@ -53,19 +53,3 @@ dependencies {
     googleImplementation 'com.google.android.gms:play-services-ads:24.4.0'
     googleImplementation 'com.google.android.play:review-ktx:2.0.2'
 }
-
-tasks.register('copyFirebaseConfig', Copy) {
-    from '../../environment/firebase'
-    into '.'
-    include 'cell-tower-radar.json'
-    rename('cell-tower-radar.json', 'google-services.json')
-}
-afterEvaluate {
-    tasks.matching { it.name.contains('Google') }.configureEach { task ->
-        if (task.name.contains('Regular')) {
-            task.enabled false
-        } else {
-            task.dependsOn copyFirebaseConfig
-        }
-    }
-}
