@@ -48,7 +48,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.okhttp)
     "googleImplementation"(platform(libs.firebase.bom))
-    "googleImplementation"(libs.firebase.analytics.ktx)
+    "googleImplementation"(libs.firebase.analytics)
     "googleImplementation"(libs.firebase.crashlytics)
     "googleImplementation"(libs.play.services.ads)
     "googleImplementation"(libs.play.review.ktx)
