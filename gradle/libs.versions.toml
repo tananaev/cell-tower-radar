@@ -1,5 +1,5 @@
 [libraries]
-androidx-core-ktx = "androidx.core:core-ktx:1.16.0"
+androidx-core-ktx = "androidx.core:core-ktx:1.18.0"
 androidx-appcompat = "androidx.appcompat:appcompat:1.7.1"
 material = "com.google.android.material:material:1.14.0"
 play-services-maps = "com.google.android.gms:play-services-maps:19.2.0"
