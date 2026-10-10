@@ -38,12 +38,10 @@ class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requireActivity().window.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-                addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                statusBarColor = Color.TRANSPARENT
-            }
+            clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            statusBarColor = Color.TRANSPARENT
         }
     }
 
@@ -60,11 +58,9 @@ class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         map.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.style_json))
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            view?.setOnApplyWindowInsetsListener { _, insets ->
-                map.setPadding(0, insets.systemWindowInsetTop, 0, 0)
-                insets
-            }
+        view?.setOnApplyWindowInsetsListener { _, insets ->
+            map.setPadding(0, insets.systemWindowInsetTop, 0, 0)
+            insets
         }
         var locationInitialized = false
         map.setOnMyLocationChangeListener { location ->
