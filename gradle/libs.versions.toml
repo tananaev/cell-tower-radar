@@ -1,18 +1,18 @@
 [libraries]
-androidx-core-ktx = "androidx.core:core-ktx:1.18.0"
-androidx-appcompat = "androidx.appcompat:appcompat:1.7.1"
+kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
+androidx-core-ktx = "androidx.core:core-ktx:1.19.1"
+androidx-appcompat = "androidx.appcompat:appcompat:1.8.0"
 material = "com.google.android.material:material:1.14.0"
 play-services-maps = "com.google.android.gms:play-services-maps:20.0.0"
-gson = "com.google.code.gson:gson:2.13.1"
-okhttp = "com.squareup.okhttp3:okhttp:4.12.0"
-firebase-bom = "com.google.firebase:firebase-bom:33.16.0"
+gson = "com.google.code.gson:gson:2.14.0"
+okhttp = "com.squareup.okhttp3:okhttp:5.5.0"
+firebase-bom = "com.google.firebase:firebase-bom:34.19.0"
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
-play-services-ads = "com.google.android.gms:play-services-ads:25.2.0"
+play-services-ads = "com.google.android.gms:play-services-ads:25.4.0"
 play-review-ktx = "com.google.android.play:review-ktx:2.0.2"
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.11.0" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.2.0" }
-google-services = { id = "com.google.gms.google-services", version = "4.4.4" }
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.7" }
+android-application = { id = "com.android.application", version = "9.4.1" }
+google-services = { id = "com.google.gms.google-services", version = "4.5.0" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version = "3.0.8" }
