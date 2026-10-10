@@ -1,12 +1,25 @@
 <resources>
     <string name="app_name">Cell Tower Radar</string>
-    <string name="title_activity_maps">Map</string>
-
-    <string name="rate_title">Rate this app</string>
-    <string name="rate_message">If you enjoy using this app, would you mind taking a moment to rate it? It won\'t take more than a minute. Thank you for your support!</string>
-    <string name="rate_later">Later</string>
-    <string name="rate_no">No, Thanks</string>
-    <string name="rate_rate">Rate Now</string>
+    <string name="loading_map">Loading map…</string>
+    <string name="loading_cells">Looking for cell towers…</string>
+    <string name="permission_required">Allow precise location to read nearby cell towers. Android requires this permission to access cellular network information.</string>
+    <string name="grant_permission">Allow location</string>
+    <string name="app_settings">Open app settings</string>
+    <string name="location_disabled">Turn on device location to find nearby cell towers.</string>
+    <string name="location_settings">Location settings</string>
+    <string name="retry">Retry</string>
+    <string name="refresh">Refresh</string>
+    <string name="no_cells">No supported cell towers reported by your phone. Check your SIM, cellular service and location settings, then try again.</string>
+    <string name="cell_info_unavailable">Cellular information is unavailable on this device.</string>
+    <string name="lookup_unavailable">Unable to look up tower locations. Check your internet connection or try again later.</string>
+    <string name="no_tower_locations">Detected cells have no locations in OpenCellID. Community coverage varies by area.</string>
+    <string name="partial_results">%1$s. Some lookups failed; try refreshing.</string>
+    <string name="tower_details">%1$s\nCountry code: %2$d\nNetwork code: %3$d\nArea code: %4$d\nCell ID: %5$d</string>
+    <plurals name="towers_found">
+        <item quantity="one">Found %d tower</item>
+        <item quantity="other">Found %d towers</item>
+    </plurals>
+    <string name="tower_attribution"><a href="https://opencellid.org">OpenCellID</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></string>
 
     <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyCslaAXqPjR5MwyKYsIc-_6GURATWfleiY</string>
 </resources>

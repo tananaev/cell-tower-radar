@@ -2,200 +2,239 @@ package com.tananaev.celltowerradar
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context.*
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.os.Build
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.telephony.CellInfoGsm
-import android.telephony.CellInfoLte
-import android.telephony.CellInfoWcdma
-import android.telephony.TelephonyManager
-import android.text.Html
+import android.provider.Settings
 import android.view.View
-import android.view.WindowManager
-import android.widget.TextView
-import androidx.core.app.ActivityCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.core.net.toUri
+import androidx.core.location.LocationManagerCompat
+import android.os.CancellationSignal
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMap.*
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
-import com.tananaev.celltowerradar.CellLocationClient.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.tananaev.celltowerradar.databinding.FragmentMainBinding
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
 
-class MainFragment : Fragment(R.layout.fragment_main), OnMapReadyCallback {
-
-    val handler = Handler(Looper.getMainLooper())
-    private lateinit var map: GoogleMap
-    private val cellLocationClient = CellLocationClient()
-    private val cells: MutableMap<Int, Marker?> = HashMap()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        requireActivity().window.apply {
-            clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-            addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-            decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            statusBarColor = Color.TRANSPARENT
-        }
+class MainFragment : Fragment(R.layout.fragment_main) {
+    private var binding: FragmentMainBinding? = null
+    private var map: GoogleMap? = null
+    private var locationInitialized = false
+    private val refreshRequests = MutableStateFlow(0)
+    private val client = CellLocationClient()
+    private val markers = mutableMapOf<CellTower, Marker>()
+    private val cache = object : LinkedHashMap<CellTower, LookupResult>(128, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<CellTower, LookupResult>?) = size > 128
+    }
+    private val permissionRequest = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        refreshRequests.value++
+    }
+    private val preferences by lazy {
+        requireContext().getSharedPreferences("permissions", android.content.Context.MODE_PRIVATE)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        updateStatus("Loading...")
+        binding = FragmentMainBinding.bind(view)
+        locationInitialized = savedInstanceState?.getBoolean("locationInitialized") ?: false
+        binding?.attribution?.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         val fragment = childFragmentManager.findFragmentById(R.id.map_view) as SupportMapFragment
-        fragment.getMapAsync(this)
-    }
-
-    private fun updateStatus(status: String) {
-        view?.findViewById<TextView>(R.id.status_view)?.text = status
-    }
-
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        map.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.style_json))
-        view?.setOnApplyWindowInsetsListener { _, insets ->
-            map.setPadding(0, insets.systemWindowInsetTop, 0, 0)
-            insets
-        }
-        var locationInitialized = false
-        map.setOnMyLocationChangeListener { location ->
-            if (!locationInitialized) {
-                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(
-                    LatLng(location.latitude, location.longitude), 14f
-                )
-                map.moveCamera(cameraUpdate)
-                locationInitialized = true
-            }
-        }
-        map.setInfoWindowAdapter(object : InfoWindowAdapter {
-            override fun getInfoWindow(marker: Marker): View? {
-                return null
-            }
-
-            override fun getInfoContents(marker: Marker): View {
-                val title = TextView(requireContext())
-                title.text = Html.fromHtml(marker.title)
-                title.textSize = resources.getInteger(R.integer.marker_text_size).toFloat()
-                return title
-            }
-        })
-        checkPermissions()
-    }
-
-    private fun checkPermissions() {
-        updateStatus("Getting location...")
-        val requiredPermission: String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Manifest.permission.ACCESS_FINE_LOCATION
-        } else {
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        }
-        if (ContextCompat.checkSelfPermission(requireContext(), requiredPermission) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), requiredPermission)) {
-                // TODO show dialog
-            } else {
-                requestPermissions(arrayOf(requiredPermission), 0)
-            }
-        } else {
-            loadData()
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadData()
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun loadData() {
-        updateStatus("Loading cell info...")
-        map.isMyLocationEnabled = false
-        map.isMyLocationEnabled = true
-        handler.post(object : Runnable {
-            override fun run() {
-                if (context != null) {
-                    loadCellInfo()
-                    handler.postDelayed(this, REFRESH_DELAY.toLong())
+        fragment.getMapAsync { googleMap ->
+            if (binding == null) return@getMapAsync
+            map = googleMap
+            googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.style_json))
+            // Keep Google's attribution above our data-source credit.
+            googleMap.setPadding(0, 0, 0, (24 * resources.displayMetrics.density).toInt())
+            googleMap.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {
+                override fun getInfoWindow(marker: Marker): View? = null
+                override fun getInfoContents(marker: Marker): View = android.widget.TextView(requireContext()).apply {
+                    text = marker.title
+                    textSize = 16f
+                    setPadding(16, 8, 16, 8)
                 }
-            }
-        })
-    }
-
-    private fun addCellTower(mcc: Int, mnc: Int, lac: Int, cid: Int, lat: Double, lon: Double) {
-        val text = """
-            <b>Country Code:</b> $mcc<br>
-            <b>Network Code:</b> $mnc<br>
-            <b>Location Area Code:</b> $lac<br>
-            <b>Cell ID:</b> $cid
-        """.trimIndent()
-
-        cells[cid] = map.addMarker(
-            MarkerOptions().position(LatLng(lat, lon))
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
-                .title(text)
-        )
-
-        when (cells.size) {
-            0 -> updateStatus("No towers found")
-            1 -> updateStatus("Found one tower")
-            else -> updateStatus("Found ${cells.size} towers")
+            })
+            refreshRequests.value++
         }
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun loadCellInfo() {
-        val telephonyManager = context?.getSystemService(TELEPHONY_SERVICE) as TelephonyManager?
-        val cellList = telephonyManager?.allCellInfo
-        if (cellList != null) {
-            for (cell in cellList) {
-                val cellTower = CellTower()
-                when (cell) {
-                    is CellInfoGsm -> {
-                        cellTower.radioType = "gsm"
-                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
-                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
-                        cellTower.locationAreaCode = cell.cellIdentity.lac
-                        cellTower.cellId = cell.cellIdentity.cid
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                refreshRequests.collectLatest {
+                    if (map == null) return@collectLatest
+                    if (!hasPermission()) {
+                        showPermissionRequired()
+                        return@collectLatest
                     }
-                    is CellInfoLte -> {
-                        cellTower.radioType = "lte"
-                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
-                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
-                        cellTower.locationAreaCode = cell.cellIdentity.tac
-                        cellTower.cellId = cell.cellIdentity.ci
+                    val locationManager = requireContext().getSystemService(LocationManager::class.java)
+                    if (!LocationManagerCompat.isLocationEnabled(locationManager)) {
+                        showStatus(getString(R.string.location_disabled), R.string.location_settings) {
+                            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                        }
+                        return@collectLatest
                     }
-                    is CellInfoWcdma -> {
-                        cellTower.radioType = "wcdma"
-                        cellTower.mobileCountryCode = cell.cellIdentity.mcc
-                        cellTower.mobileNetworkCode = cell.cellIdentity.mnc
-                        cellTower.locationAreaCode = cell.cellIdentity.lac
-                        cellTower.cellId = cell.cellIdentity.cid
-                    }
-                }
-                if (cellTower.cellId != 0 && cellTower.cellId != Int.MAX_VALUE && !cells.containsKey(cellTower.cellId)) {
-                    cellLocationClient.getCellLocation(cellTower, object : CellLocationCallback {
-                        override fun onSuccess(lat: Double, lon: Double) {
-                            handler.post {
-                                addCellTower(
-                                    cellTower.mobileCountryCode, cellTower.mobileNetworkCode,
-                                    cellTower.locationAreaCode, cellTower.cellId, lat, lon)
+                    try {
+                        enableLocation()
+                        coroutineScope {
+                            launch { centerOnLocation(locationManager) }
+                            while (isActive) {
+                                refreshTowers()
+                                delay(60_000)
                             }
                         }
-
-                        override fun onFailure() {}
-                    })
+                    } catch (_: SecurityException) {
+                        showPermissionRequired()
+                    } catch (_: UnsupportedOperationException) {
+                        showStatus(getString(R.string.cell_info_unavailable), R.string.retry, action = ::retry)
+                    }
                 }
             }
         }
+    }
+
+    private fun retry() {
+        cache.entries.removeAll { it.value is LookupResult.NotFound }
+        refreshRequests.value++
+    }
+
+    private fun hasPermission() = ContextCompat.checkSelfPermission(
+        requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+
+    private fun showPermissionRequired() {
+        val openSettings = preferences.getBoolean("requested", false) &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+        showStatus(getString(R.string.permission_required),
+            if (openSettings) R.string.app_settings else R.string.grant_permission) {
+            if (openSettings) {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    "package:${requireContext().packageName}".toUri()))
+            } else {
+                preferences.edit { putBoolean("requested", true) }
+                permissionRequest.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION))
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun enableLocation() { map?.isMyLocationEnabled = true }
+
+    @SuppressLint("MissingPermission")
+    private suspend fun centerOnLocation(manager: LocationManager) {
+        if (locationInitialized) return
+        for (provider in listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)) {
+            if (!manager.isProviderEnabled(provider)) continue
+            val location = withTimeoutOrNull(15_000) {
+                suspendCancellableCoroutine<Location?> { continuation ->
+                    val cancellation = CancellationSignal()
+                    continuation.invokeOnCancellation { cancellation.cancel() }
+                    LocationManagerCompat.getCurrentLocation(manager, provider, cancellation,
+                        ContextCompat.getMainExecutor(requireContext())) {
+                        if (continuation.isActive) continuation.resume(it)
+                    }
+                }
+            } ?: continue
+            map?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 14f))
+            locationInitialized = true
+            break
+        }
+    }
+
+    private suspend fun refreshTowers() {
+        if (markers.isEmpty()) showStatus(getString(R.string.loading_cells))
+        val towers = CellInfoReader(requireContext()).read()
+        markers.keys.filter { it !in towers }.forEach { markers.remove(it)?.remove() }
+        if (towers.isEmpty()) {
+            showStatus(getString(R.string.no_cells), R.string.retry, action = ::retry)
+            return
+        }
+        val results = withTimeoutOrNull(30_000) {
+            coroutineScope {
+                val limit = Semaphore(4)
+                towers.map { tower ->
+                    async {
+                        tower to (cache[tower] ?: limit.withPermit { client.getCellLocation(tower) }.also {
+                            if (it !is LookupResult.Unavailable) cache[tower] = it
+                        })
+                    }
+                }.awaitAll()
+            }
+        }
+        if (results == null) {
+            showStatus(getString(R.string.lookup_unavailable), R.string.retry, action = ::retry)
+            return
+        }
+        results.forEach { (tower, result) ->
+            if (result is LookupResult.Found && tower !in markers) {
+                map?.addMarker(MarkerOptions()
+                    .position(LatLng(result.location.latitude, result.location.longitude))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.tower))
+                    .title(getString(R.string.tower_details, tower.radio, tower.mcc, tower.mnc, tower.area, tower.id)))
+                    ?.let { markers[tower] = it }
+            }
+        }
+        val failed = results.any { it.second is LookupResult.Unavailable }
+        when {
+            markers.isNotEmpty() -> {
+                val count = resources.getQuantityString(R.plurals.towers_found, markers.size, markers.size)
+                showStatus(if (failed) getString(R.string.partial_results, count) else count,
+                    R.string.refresh, contentAvailable = true, action = ::retry)
+            }
+            failed -> showStatus(getString(R.string.lookup_unavailable), R.string.retry, action = ::retry)
+            else -> showStatus(getString(R.string.no_tower_locations), R.string.retry, action = ::retry)
+        }
+    }
+
+    private fun showStatus(text: String, actionLabel: Int? = null, contentAvailable: Boolean = false,
+                           action: (() -> Unit)? = null) {
+        binding?.apply {
+            statusView.text = text
+            statusAction.isVisible = actionLabel != null
+            actionLabel?.let(statusAction::setText)
+            statusAction.setOnClickListener { action?.invoke() }
+        }
+        parentFragmentManager.setFragmentResult(CONTENT_STATE, Bundle().apply { putBoolean(CONTENT_AVAILABLE, contentAvailable) })
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("locationInitialized", locationInitialized)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroyView() {
+        map?.setInfoWindowAdapter(null)
+        map = null
+        markers.clear()
+        binding = null
+        super.onDestroyView()
     }
 
     companion object {
-        private const val REFRESH_DELAY = 60 * 1000
+        const val CONTENT_STATE = "towerContentState"
+        const val CONTENT_AVAILABLE = "contentAvailable"
     }
 }

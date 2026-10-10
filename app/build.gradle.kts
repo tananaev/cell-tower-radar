@@ -38,11 +38,20 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            resValue("string", "ad_unit_id", "ca-app-pub-3940256099942544/6300978111")
+        }
         getByName("release") {
+            resValue("string", "ad_unit_id", "ca-app-pub-9061647223840223/7068051826")
             if (System.getenv("KEYSTORE_FILE") != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+    }
+
+    buildFeatures {
+        viewBinding = true
+        resValues = true
     }
 
     compileOptions {
@@ -52,6 +61,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

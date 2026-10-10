@@ -1,4 +1,7 @@
 [libraries]
+androidx-fragment-ktx = "androidx.fragment:fragment-ktx:1.9.1"
+androidx-lifecycle-runtime-ktx = "androidx.lifecycle:lifecycle-runtime-ktx:2.11.0"
+kotlinx-coroutines-android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0"
 kotlin-gradle-plugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21"
 androidx-core-ktx = "androidx.core:core-ktx:1.19.1"
 androidx-appcompat = "androidx.appcompat:appcompat:1.8.0"
