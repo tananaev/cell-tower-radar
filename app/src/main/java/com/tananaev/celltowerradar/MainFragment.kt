@@ -71,6 +71,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
             googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.style_json))
             // Keep Google's attribution above our data-source credit.
             googleMap.setPadding(0, 0, 0, (24 * resources.displayMetrics.density).toInt())
+            googleMap.uiSettings.isMyLocationButtonEnabled = true
             googleMap.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {
                 override fun getInfoWindow(marker: Marker): View? = null
                 override fun getInfoContents(marker: Marker): View = android.widget.TextView(requireContext()).apply {
@@ -141,7 +142,12 @@ class MainFragment : Fragment(R.layout.fragment_main) {
     }
 
     @SuppressLint("MissingPermission")
-    private fun enableLocation() { map?.isMyLocationEnabled = true }
+    private fun enableLocation() {
+        map?.apply {
+            isMyLocationEnabled = true
+            uiSettings.isMyLocationButtonEnabled = true
+        }
+    }
 
     @SuppressLint("MissingPermission")
     private suspend fun centerOnLocation(manager: LocationManager) {
@@ -157,7 +163,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                         if (continuation.isActive) continuation.resume(it)
                     }
                 }
-            } ?: continue
+            } ?: manager.getLastKnownLocation(provider) ?: continue
             map?.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(location.latitude, location.longitude), 14f))
             locationInitialized = true
             break
